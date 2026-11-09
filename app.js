@@ -447,7 +447,7 @@ function drawRandomExercise() {
 }
 
 // 10. Timed Interval Engine (Plank)
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 102; // 640.88
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 86; // 540.35
 
 function initPlankTimer(sets, workSec, restSec) {
   clearInterval(state.timer.intervalId);

@@ -2,38 +2,39 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SportBagrut ⚡ הגרלת תרגילים לבגרות בספורט</title>
-  <meta name="description" content="אפליקציה ספורטיבית קלילה ונקייה להגרלת תרגילי בגרות בספורט: פלאנק, ברכת השמש, כפיפות בטן ושכיבות סמיכה עם טיימר מסך מלא, איורים והסברים.">
+  <meta name="description" content="אפליקציה ספורטיבית קלילה ונקייה להגרלת תרגילי בגרות בספורט מותאמת ב-100% לטלפון נייד: פלאנק, ברכת השמש, כפיפות בטן ושכיבות סמיכה.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Header with clean segmented tab navigation -->
+  <!-- Header: Compact and clean on both mobile and desktop -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand">
         <span class="brand-icon">⚡</span>
-        <div>
-          <h1 class="brand-title">SportBagrut <span class="brand-badge">בגרות & כושר</span></h1>
+        <div class="brand-text">
+          <h1 class="brand-title">SportBagrut</h1>
+          <span class="brand-badge">בגרות & כושר</span>
         </div>
       </div>
 
-      <!-- Segmented Tab Navigation: Switches screen without long scrolling -->
-      <nav class="tab-nav" role="tablist" aria-label="תפריט ניווט ראשי">
+      <!-- Desktop Tab Bar (Moves to bottom bar automatically on mobile) -->
+      <nav class="tab-nav" role="tablist" aria-label="תפריט ניווט">
         <button class="tab-btn active" data-tab="tab-lottery" role="tab" aria-selected="true">
           <span class="tab-icon">🎲</span>
-          <span>הגרלת תרגיל</span>
+          <span class="tab-label">הגרלת תרגיל</span>
         </button>
         <button class="tab-btn" data-tab="tab-catalog" role="tab" aria-selected="false">
           <span class="tab-icon">📋</span>
-          <span>כל התרגילים</span>
+          <span class="tab-label">כל התרגילים</span>
         </button>
         <button class="tab-btn" data-tab="tab-tips" role="tab" aria-selected="false">
           <span class="tab-icon">💡</span>
-          <span>טיפים לבגרות</span>
+          <span class="tab-label">טיפים לבגרות</span>
         </button>
       </nav>
 
@@ -51,26 +52,28 @@
     
     <!-- VIEW 1: LOTTERY (Only shown on Tab 1) -->
     <section id="tab-lottery" class="view-panel active" role="tabpanel">
-      <div class="lottery-view-card">
+      <div class="lottery-card-mobile">
         <div class="lottery-header">
           <span class="badge-pill">🎯 מוכנים לאתגר?</span>
-          <h2>הגרלת תרגיל יומי לבגרות</h2>
-          <p>לחצו על הכפתור כדי להגריל תרגיל פתע. התרגיל ייפתח מיד במסך מלא עם טיימר וספירה קולית!</p>
+          <h2>מה התרגיל שלך עכשיו?</h2>
+          <p>לחצו להגרלת תרגיל פתע. התרגיל ייפתח מיד במסך מלא מותאם במיוחד לטלפון!</p>
         </div>
 
-        <div class="lottery-stage">
+        <div class="lottery-center">
           <div class="dice-wrapper">
             <div class="floating-dice">🎲</div>
             <div class="dice-shadow"></div>
           </div>
           
-          <div class="lottery-options-preview">
-            <span class="preview-item">🧘‍♂️ פלאנק מתוזמן</span>
-            <span class="preview-item">☀️ ברכת השמש</span>
-            <span class="preview-item">💪 כפיפות בטן</span>
-            <span class="preview-item">⚡ שכיבות סמיכה</span>
+          <div class="lottery-chips">
+            <span class="chip">🧘‍♂️ פלאנק</span>
+            <span class="chip">☀️ ברכת השמש</span>
+            <span class="chip">💪 כפיפות בטן</span>
+            <span class="chip">⚡ שכיבות סמיכה</span>
           </div>
+        </div>
 
+        <div class="lottery-bottom">
           <button id="main-draw-btn" class="btn btn-primary btn-draw-huge">
             <span class="btn-icon">⚡</span>
             <span>הגרל לי תרגיל עכשיו!</span>
@@ -82,9 +85,9 @@
     <!-- VIEW 2: FULL CATALOG (Only shown on Tab 2) -->
     <section id="tab-catalog" class="view-panel" role="tabpanel">
       <div class="view-header">
-        <span class="badge-pill">📋 מאגר התרגילים המלא</span>
+        <span class="badge-pill">📋 מאגר התרגילים</span>
         <h2>כל התרגילים והאפשרויות</h2>
-        <p>בחרו כל תרגיל או וריאציה כדי להתחיל מיד באימון במסך מלא, או צפו בדגשי הטכניקה:</p>
+        <p>בחרו תרגיל או וריאציה מסוימת כדי להתחיל מיד במסך מלא:</p>
       </div>
 
       <div class="catalog-grid" id="catalog-grid">
@@ -96,7 +99,7 @@
     <section id="tab-tips" class="view-panel" role="tabpanel">
       <div class="view-header">
         <span class="badge-pill">💡 הכנה לבגרות</span>
-        <h2>דגשים וטיפים מנצחים לבגרות בספורט</h2>
+        <h2>דגשים וטיפים מנצחים</h2>
         <p>איך לבצע כל תרגיל נכון, לשמור על הגב ולזכות בציון מקסימלי</p>
       </div>
 
@@ -130,93 +133,92 @@
   </main>
 
   <!-- ========================================================
-       FULLSCREEN WORKOUT ARENA (תצוגת מסך מלא ממוקדת כשמוגרל משהו)
+       FULLSCREEN WORKOUT ARENA (מותאם במדויק לגובה מסך של טלפון ללא גלילה)
        ======================================================== -->
   <div id="fullscreen-workout" class="fullscreen-overlay hidden" aria-modal="true" role="dialog">
-    <div class="workout-container">
+    <div class="workout-phone-view">
       
-      <!-- Workout Top Bar with Clear Exit Button -->
-      <div class="workout-header">
-        <button id="exit-workout-btn" class="btn btn-quit" title="יציאה או ויתור על התרגיל">
-          <span class="quit-icon">✕</span>
-          <span>יציאה / ויתור</span>
+      <!-- 1. Top Bar: Exit Button + Title + Sound -->
+      <div class="wk-top-bar">
+        <button id="exit-workout-btn" class="btn-exit-touch" title="יציאה או ויתור">
+          <span class="exit-x">✕</span>
+          <span class="exit-txt">ויתור ויציאה</span>
         </button>
 
-        <div class="workout-title-group">
-          <span class="workout-badge" id="wk-badge">תרגיל פעיל</span>
-          <h2 id="wk-title" class="workout-exercise-title">שם התרגיל</h2>
+        <div class="wk-title-center">
+          <span class="wk-cat-pill" id="wk-badge">תרגיל פעיל</span>
+          <h2 id="wk-title" class="wk-h2">שם התרגיל</h2>
         </div>
 
-        <button id="wk-sound-btn" class="icon-toggle-btn" title="הפעל / השתק צלילים">
+        <button id="wk-sound-btn" class="icon-toggle-btn small" title="צלילים">
           <span id="wk-sound-icon">🔊</span>
         </button>
       </div>
 
-      <!-- Workout Middle Area: Image & Specification -->
-      <div class="workout-meta-bar">
-        <div class="wk-img-box">
-          <img id="wk-image" src="" alt="תרגיל" onerror="this.style.display='none'">
+      <!-- 2. Goal Spec Pill + Image -->
+      <div class="wk-spec-card">
+        <div class="wk-thumb">
+          <img id="wk-image" src="" alt="תרגיל">
         </div>
-        <div class="wk-spec-box">
-          <span class="spec-label">🎯 האתגר שלך:</span>
-          <div class="spec-value" id="wk-spec">וריאציה מוגדרת</div>
+        <div class="wk-spec-texts">
+          <span class="wk-spec-lbl">🎯 האתגר שלך:</span>
+          <span class="wk-spec-val" id="wk-spec">וריאציה מוגדרת</span>
         </div>
       </div>
 
-      <!-- Workout Interactive Interface: Timed Plank vs Reps -->
-      <div class="workout-stage">
+      <!-- 3. Central Stage (Timer or Reps) -->
+      <div class="wk-middle-stage">
         
-        <!-- 1. Plank Interval Timer -->
-        <div id="wk-timed-box" class="wk-box hidden">
-          <div class="timer-visual">
-            <svg class="progress-ring" viewBox="0 0 240 240">
-              <circle class="ring-bg" cx="120" cy="120" r="102"></circle>
-              <circle class="ring-progress" id="timer-ring" cx="120" cy="120" r="102"></circle>
+        <!-- Plank Interval Timer -->
+        <div id="wk-timed-box" class="stage-pane hidden">
+          <div class="timer-circle-box">
+            <svg class="progress-ring-phone" viewBox="0 0 200 200">
+              <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
+              <circle class="ring-progress" id="timer-ring" cx="100" cy="100" r="86"></circle>
             </svg>
-            <div class="timer-center-info">
-              <span class="phase-badge" id="wk-phase-badge">מוכן</span>
-              <span class="timer-numbers" id="wk-timer-digits">00:00</span>
-              <span class="round-count" id="wk-round-count">סט 1 מתוך 4</span>
+            <div class="timer-center-texts">
+              <span class="phase-tag" id="wk-phase-badge">מוכן</span>
+              <span class="timer-digits-phone" id="wk-timer-digits">00:00</span>
+              <span class="round-count-phone" id="wk-round-count">סט 1 מתוך 4</span>
             </div>
           </div>
 
-          <div class="workout-btn-row">
-            <button id="timer-toggle-btn" class="btn btn-primary btn-large">
+          <div class="wk-btn-grid">
+            <button id="timer-toggle-btn" class="btn btn-primary btn-touch-action">
               <span id="timer-action-icon">▶</span>
               <span id="timer-action-text">התחל אימון</span>
             </button>
-            <button id="timer-reset-btn" class="btn btn-secondary btn-large">
+            <button id="timer-reset-btn" class="btn btn-secondary btn-touch-action">
               <span>🔄 איפוס</span>
             </button>
           </div>
         </div>
 
-        <!-- 2. Reps Counter (Pushups, Crunches, Sun Salutation) -->
-        <div id="wk-reps-box" class="wk-box hidden">
-          <div class="reps-center-display">
-            <div class="reps-circle-card">
-              <span class="reps-big-num" id="wk-reps-current">0</span>
-              <span class="reps-total-label" id="wk-reps-target">מתוך 10 חזרות</span>
+        <!-- Reps Counter -->
+        <div id="wk-reps-box" class="stage-pane hidden">
+          <div class="reps-box-phone">
+            <div class="reps-circle-phone">
+              <span class="reps-num-big" id="wk-reps-current">0</span>
+              <span class="reps-lbl-phone" id="wk-reps-target">מתוך 10 חזרות</span>
             </div>
             
-            <div class="reps-progress-bar-wrap">
-              <div class="reps-progress-bar-fill" id="wk-reps-bar"></div>
+            <div class="reps-bar-phone">
+              <div class="reps-bar-fill-phone" id="wk-reps-bar"></div>
             </div>
           </div>
 
-          <div class="workout-btn-row reps-controls-row">
-            <button id="rep-dec-btn" class="btn btn-secondary btn-large" title="הורד חזרה">
-              <span class="btn-sym">−</span>
-              <span>הורד חזרה</span>
-            </button>
-            <button id="rep-inc-btn" class="btn btn-primary btn-large" title="סמן חזרה נוספת">
-              <span class="btn-sym">+</span>
-              <span>חזרה נוספת!</span>
-            </button>
-          </div>
-
-          <div class="reps-finish-row">
-            <button id="rep-finish-btn" class="btn btn-success btn-large">
+          <div class="reps-actions-phone">
+            <div class="wk-btn-grid">
+              <button id="rep-dec-btn" class="btn btn-secondary btn-touch-action" title="הורד חזרה">
+                <span class="sym-step">−</span>
+                <span>הורד חזרה</span>
+              </button>
+              <button id="rep-inc-btn" class="btn btn-primary btn-touch-action" title="סמן חזרה נוספת">
+                <span class="sym-step">+</span>
+                <span>חזרה נוספת!</span>
+              </button>
+            </div>
+            <button id="rep-finish-btn" class="btn btn-success btn-touch-action full">
               <span>🏆 סיימתי את כל החזרות!</span>
             </button>
           </div>
@@ -224,25 +226,23 @@
 
       </div>
 
-      <!-- Workout Footer / Tip -->
-      <div class="workout-footer-tip">
-        <span class="tip-icon-sm">💡</span>
-        <span id="wk-technique-tip">דגש: שמרו על גב ישר ונשימה רציפה לכל אורך התרגיל.</span>
+      <!-- 4. Bottom Tip Bar -->
+      <div class="wk-bottom-tip">
+        <span class="tip-ico">💡</span>
+        <span id="wk-technique-tip">דגש: שמרו על גב ישר ונשימה רציפה.</span>
       </div>
 
     </div>
   </div>
 
-  <!-- Exercise Detail Modal Dialog (Native <dialog> with modern-web-guidance) -->
+  <!-- Exercise Detail Modal Dialog -->
   <dialog id="exercise-dialog" closedby="any" aria-labelledby="dialog-exercise-title">
     <div class="dialog-content">
       <div class="dialog-header">
         <h3 id="dialog-exercise-title">פירוט תרגיל</h3>
         <button type="button" class="btn-close" id="dialog-close-btn" aria-label="סגור">✕</button>
       </div>
-      <div class="dialog-body" id="dialog-body">
-        <!-- Rendered dynamically -->
-      </div>
+      <div class="dialog-body" id="dialog-body"></div>
     </div>
   </dialog>
 
@@ -253,20 +253,14 @@
       <h3 id="celebrate-title">אלופים! כל הכבוד!</h3>
       <p id="celebrate-message">סיימתם את התרגיל בהצלחה יתרה!</p>
       <div class="celebrate-btn-row">
-        <button type="button" class="btn btn-primary btn-large" id="celebrate-next-btn">🎲 הגרל אתגר נוסף</button>
-        <button type="button" class="btn btn-secondary btn-large" id="celebrate-close-btn">סגור וחזור</button>
+        <button type="button" class="btn btn-primary" id="celebrate-next-btn">🎲 הגרל אתגר נוסף</button>
+        <button type="button" class="btn btn-secondary" id="celebrate-close-btn">סגור וחזור</button>
       </div>
     </div>
   </dialog>
 
   <!-- Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
-
-  <footer class="app-footer">
-    <div class="footer-container">
-      <p>⚡ <strong>SportBagrut</strong> - נוצר עבור בגרות בספורט וכושר אישי מהנה, מדויק ופרקטי.</p>
-    </div>
-  </footer>
 
   <script src="app.js"></script>
 </body>
