@@ -18,13 +18,30 @@
         <span class="brand-icon">⚡</span>
         <div>
           <h1 class="brand-title">SportBagrut <span class="brand-badge">בגרות & כושר</span></h1>
-          <p class="brand-subtitle">הגרלת אימונים ותרגילים קלילים ומדויקים</p>
+          <p class="brand-subtitle">הגרלת אימונים ותרגילים פרקטיים ומדויקים</p>
         </div>
       </div>
+      
+      <!-- Quick Settings in Header -->
+      <div class="header-tools">
+        <button id="voice-toggle-btn" class="tool-btn" title="הקראת ספירה קולית" aria-pressed="true">
+          <span class="tool-icon" id="voice-icon">🗣️</span>
+          <span class="tool-label">הקראה</span>
+        </button>
+        <button id="sound-toggle-btn" class="tool-btn" title="הפעל / השתק צלילים" aria-pressed="true">
+          <span class="tool-icon" id="sound-icon">🔊</span>
+          <span class="tool-label">צלילים</span>
+        </button>
+        <button id="wakelock-toggle-btn" class="tool-btn active" title="שמור מסך דולק בזמן אימון" aria-pressed="true">
+          <span class="tool-icon">💡</span>
+          <span class="tool-label">מסך דולק</span>
+        </button>
+      </div>
+
       <nav class="nav-links">
         <a href="#lottery-section" class="nav-link active">🎲 הגרלה</a>
         <a href="#catalog-section" class="nav-link">📋 כל התרגילים</a>
-        <a href="#tips-section" class="nav-link">💡 טיפים לבגרות</a>
+        <a href="#tips-section" class="nav-link">💡 טיפים</a>
       </nav>
     </div>
   </header>
@@ -34,9 +51,12 @@
     <section id="lottery-section" class="hero-section">
       <div class="hero-banner">
         <div class="hero-text">
-          <span class="tag-pill">🎯 מוכנים לאתגר הבא?</span>
-          <h2>מה התרגיל שלך להיום?</h2>
-          <p>לחצו על כפתור ההגרלה כדי לקבל תרגיל עם מספר חזרות או זמנים מותאמים אישית לבגרות בספורט ובריאות הגוף!</p>
+          <div class="tag-row">
+            <span class="tag-pill">🎯 הגרלה מהירה</span>
+            <span class="tag-pill subtle">100% תואם בגרות</span>
+          </div>
+          <h2>איזה אתגר יוצא לך עכשיו?</h2>
+          <p>לחיצה אחת מגרילה תרגיל ופותחת מיד לוח אימון חכם עם טיימר וספירה קולית – מותאם לתרגול על המזרן!</p>
         </div>
 
         <!-- Lottery Machine Card -->
@@ -44,41 +64,44 @@
           <div class="lottery-display" id="lottery-display">
             <div class="lottery-placeholder">
               <div class="dice-bounce">🎲</div>
-              <p>לחצו על הכפתור למטה להגרלת תרגיל פתע!</p>
+              <p>לחצו למטה להגרלת תרגיל פתע מיידית!</p>
             </div>
           </div>
 
-          <!-- Controls -->
-          <div class="lottery-actions">
-            <button id="draw-btn" class="btn btn-primary btn-large">
+          <!-- Uniform Action Buttons -->
+          <div class="lottery-actions-grid">
+            <button id="draw-btn" class="btn btn-primary btn-lg">
               <span class="btn-icon">⚡</span>
               <span>הגרל לי תרגיל עכשיו!</span>
-            </button>
-            <button id="sound-toggle-btn" class="btn btn-outline" title="הפעל / השתק צלילים">
-              <span id="sound-icon">🔊</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Active Workout Trainer Container (appears when exercise is drawn or selected) -->
+      <!-- Active Workout Trainer Container (High-Ergonomic Training Area) -->
       <div id="trainer-container" class="trainer-container hidden" aria-live="polite">
-        <div class="trainer-header">
-          <div class="trainer-title-wrap">
+        <div class="trainer-top-bar">
+          <div class="trainer-status">
+            <span class="status-indicator-dot"></span>
             <span class="trainer-badge" id="trainer-type-badge">אימון מתוזמן</span>
-            <h3 id="trainer-exercise-title">שם התרגיל</h3>
-            <p id="trainer-param-desc">הגדרת האימון</p>
           </div>
-          <button id="close-trainer-btn" class="btn-close-subtle" title="סגור אימון">✕</button>
+          <button id="close-trainer-btn" class="btn-icon-subtle" title="סגור אימון">✕</button>
+        </div>
+
+        <div class="trainer-exercise-header">
+          <div class="trainer-info">
+            <h3 id="trainer-exercise-title">שם התרגיל</h3>
+            <div class="trainer-spec-pill" id="trainer-param-desc">הגדרת האימון</div>
+          </div>
         </div>
 
         <div class="trainer-body">
           <!-- Timed Plank Interface -->
           <div id="timed-interface" class="interface-pane hidden">
             <div class="timer-visual">
-              <svg class="progress-ring" viewBox="0 0 200 200">
-                <circle class="ring-bg" cx="100" cy="100" r="85"></circle>
-                <circle class="ring-progress" id="timer-progress-ring" cx="100" cy="100" r="85"></circle>
+              <svg class="progress-ring" viewBox="0 0 220 220">
+                <circle class="ring-bg" cx="110" cy="110" r="95"></circle>
+                <circle class="ring-progress" id="timer-progress-ring" cx="110" cy="110" r="95"></circle>
               </svg>
               <div class="timer-display-inner">
                 <span class="phase-tag" id="timer-phase-tag">מוכן</span>
@@ -87,11 +110,14 @@
               </div>
             </div>
 
-            <div class="timer-controls">
-              <button id="timer-start-pause-btn" class="btn btn-success">
-                <span id="timer-btn-icon">▶</span> <span id="timer-btn-text">התחל</span>
+            <!-- Balanced Ergonomic Button Row -->
+            <div class="action-btn-group grid-2">
+              <button id="timer-start-pause-btn" class="btn btn-success btn-lg">
+                <span id="timer-btn-icon">▶</span> <span id="timer-btn-text">התחל אימון</span>
               </button>
-              <button id="timer-reset-btn" class="btn btn-secondary">איפוס</button>
+              <button id="timer-reset-btn" class="btn btn-secondary btn-lg">
+                <span>🔄 איפוס</span>
+              </button>
             </div>
           </div>
 
@@ -107,10 +133,19 @@
               </div>
             </div>
 
-            <div class="reps-controls">
-              <button id="rep-minus-btn" class="btn btn-round btn-outline" title="הורד חזרה">-</button>
-              <button id="rep-plus-btn" class="btn btn-round btn-primary" title="סמן חזרה נוספת">+ חזרה</button>
-              <button id="rep-complete-btn" class="btn btn-success">סיימתי את כל החזרות! 🎉</button>
+            <!-- Large Ergonomic Buttons for floor tapping -->
+            <div class="action-btn-group reps-grid">
+              <button id="rep-minus-btn" class="btn btn-outline btn-lg rep-step-btn" title="הורד חזרה">
+                <span class="step-symbol">−</span>
+                <span class="step-text">הורד</span>
+              </button>
+              <button id="rep-plus-btn" class="btn btn-primary btn-lg rep-step-btn" title="סמן חזרה נוספת">
+                <span class="step-symbol">+</span>
+                <span class="step-text">חזרה!</span>
+              </button>
+              <button id="rep-complete-btn" class="btn btn-success btn-lg full-span">
+                <span>🏆 סיימתי את כל החזרות!</span>
+              </button>
             </div>
           </div>
         </div>
@@ -120,9 +155,17 @@
     <!-- Exercise Catalog Section -->
     <section id="catalog-section" class="catalog-section">
       <div class="section-header">
-        <span class="tag-pill">📋 מאגר התרגילים</span>
-        <h2>כל התרגילים והאפשרויות</h2>
-        <p>סקירה מפורטת של התרגילים, אופציות ההגרלה ודגשים טכניים חשובים לבגרות בספורט</p>
+        <span class="tag-pill">📋 מאגר התרגילים המלא</span>
+        <h2>כל התרגילים והאופציות לבחירה</h2>
+        <p>לחצו על כל תרגיל או על וריאציה מסוימת כדי להתחיל אימון ישיר, או קראו את דגשי הטכניקה:</p>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div class="catalog-filters" id="catalog-filters">
+        <button class="filter-chip active" data-filter="all">הכל (4 תרגילים)</button>
+        <button class="filter-chip" data-filter="core">בטן וליבה</button>
+        <button class="filter-chip" data-filter="upper">פלג גוף עליון</button>
+        <button class="filter-chip" data-filter="mobility">גמישות ונשימה</button>
       </div>
 
       <div class="catalog-grid" id="catalog-grid">
@@ -166,6 +209,21 @@
     </section>
   </main>
 
+  <!-- Sticky Bottom Quick Action Bar (Mobile & Quick Access) -->
+  <aside class="sticky-workout-bar" id="sticky-bar">
+    <div class="sticky-bar-content">
+      <button id="quick-draw-btn" class="btn btn-primary btn-md">
+        <span>🎲 הגרלה מהירה</span>
+      </button>
+      <button id="quick-trainer-btn" class="btn btn-secondary btn-md hidden">
+        <span>⚡ חזור לאימון פעיל</span>
+      </button>
+      <a href="#lottery-section" class="btn btn-outline btn-icon" title="גלול למעלה">
+        <span>⬆️</span>
+      </a>
+    </div>
+  </aside>
+
   <!-- Modern Modal Dialog for Exercise Detail / Technique Guide -->
   <dialog id="exercise-dialog" closedby="any" aria-labelledby="dialog-exercise-title">
     <div class="dialog-content">
@@ -185,9 +243,9 @@
       <div class="celebrate-icon">🏆</div>
       <h3 id="celebrate-title">אלופים! כל הכבוד!</h3>
       <p id="celebrate-message">סיימתם את התרגיל בהצלחה יתרה!</p>
-      <div class="celebrate-actions">
-        <button type="button" class="btn btn-primary" id="celebrate-draw-next-btn">🎲 הגרל אתגר נוסף</button>
-        <button type="button" class="btn btn-outline" id="celebrate-close-btn">סגור</button>
+      <div class="celebrate-actions action-btn-group grid-2">
+        <button type="button" class="btn btn-primary btn-lg" id="celebrate-draw-next-btn">🎲 הגרל אתגר נוסף</button>
+        <button type="button" class="btn btn-outline btn-lg" id="celebrate-close-btn">סגור</button>
       </div>
     </div>
   </dialog>
@@ -197,8 +255,8 @@
 
   <footer class="app-footer">
     <div class="footer-container">
-      <p>⚡ <strong>SportBagrut</strong> - נוצר באהבה עבור בגרות בספורט וכושר אישי מהנה ובריא.</p>
-      <p class="footer-sub">מתאים לכל מסך • מחשב, טאבלט וסמארטפון</p>
+      <p>⚡ <strong>SportBagrut</strong> - נוצר עבור בגרות בספורט וכושר אישי מהנה, מדויק ופרקטי.</p>
+      <p class="footer-sub">מותאם לטלפון, טאבלט ומחשב • לחצנים מותאמים לאימון על המזרן</p>
     </div>
   </footer>
 

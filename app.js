@@ -1,5 +1,6 @@
 /**
  * SportBagrut - אפליקציית כושר והגרלת תרגילים לבגרות בספורט
+ * גרסה משודרגת: ארגונומית, פרקטית, שליטה קולית וממשק מותאם למזרן
  */
 
 // 1. Data Store: Exercises and their exact options as requested
@@ -7,8 +8,8 @@ const EXERCISES = [
   {
     id: 'plank',
     name: 'פלאנק (בטן סטטית)',
-    category: 'ליבה ויציבה',
-    categoryClass: 'core',
+    category: 'בטן וליבה',
+    categoryKey: 'core',
     icon: '🧘‍♂️',
     image: 'assets/plank.jpg',
     description: 'תרגיל יסוד חיוני לבגרות בספורט לחיזוק שרירי הליבה, הבטן העמוקה, הגב התחתון וחגורת הכתפיים.',
@@ -35,7 +36,7 @@ const EXERCISES = [
     id: 'sun_salutation',
     name: 'ברכת השמש (סוריה נמסקר)',
     category: 'גמישות ונשימה',
-    categoryClass: 'mobility',
+    categoryKey: 'mobility',
     icon: '☀️',
     image: 'assets/sun_salutation.jpg',
     description: 'רצף תנועות יוגה קלאסי ומחמם המאריך את שרירי הירך, משפר גמישות עמוד השדרה ומרגיע את מערכת העצבים.',
@@ -50,7 +51,7 @@ const EXERCISES = [
     bagrutTips: [
       'תנועה זורמת עם סנכרון נשימתי מלא (שאיפה בהרחבת בית החזה, נשיפה בכפיפה קדימה).',
       'האריכו את עמוד השדרה בכל כפיפה ואל תמשכו בכוח.',
-      'שמרו על ברכיים מעט רכות אם השרירים האחוריים (Hamstrings) מקוצרים.'
+      'שמרו על ברכיים מעט רכות אם השרירים האחוריים מקוצרים.'
     ],
     commonMistakes: [
       'ביצוע מהיר ותזזיתי ללא שליטה בנשימה.',
@@ -60,8 +61,8 @@ const EXERCISES = [
   {
     id: 'crunches',
     name: 'כפיפות בטן',
-    category: 'חיזוק שרירי בטן',
-    categoryClass: 'abs',
+    category: 'בטן וליבה',
+    categoryKey: 'core',
     icon: '💪',
     image: 'assets/crunches.jpg',
     description: 'התרגיל הקלאסי של מבחני הכושר והבגרות בספורט לחיזוק שריר הישר הבטני (Rectus Abdominis).',
@@ -88,7 +89,7 @@ const EXERCISES = [
     id: 'knee_pushups',
     name: 'שכיבות סמיכה (על הברכיים)',
     category: 'פלג גוף עליון',
-    categoryClass: 'upper',
+    categoryKey: 'upper',
     icon: '⚡',
     image: 'assets/knee_pushups.jpg',
     description: 'גרסה מצוינת ובטוחה לפיתוח כוח בחזה, בכתפיים וביד האחורית (תלת-ראשי) עם עומס מותאם ומדויק.',
@@ -113,74 +114,106 @@ const EXERCISES = [
   }
 ];
 
-// 2. Sound Effects Engine (Web Audio API - clean, fast, no external files)
-class SoundFX {
+// 2. Audio & Speech Assistant (Hands-Free for Mat Workout)
+class VoiceAssistant {
   constructor() {
-    this.ctx = null;
-    this.enabled = true;
+    this.speechEnabled = true;
+    this.soundEnabled = true;
+    this.wakeLock = null;
+    this.wakeLockEnabled = true;
+    this.audioCtx = null;
   }
 
-  init() {
-    if (!this.ctx) {
+  initAudio() {
+    if (!this.audioCtx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-      }
+      if (AudioCtx) this.audioCtx = new AudioCtx();
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
     }
   }
 
   playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.2) {
-    if (!this.enabled) return;
-    this.init();
-    if (!this.ctx) return;
+    if (!this.soundEnabled) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
 
     try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
-      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-
+      osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
+      gain.connect(this.audioCtx.destination);
       osc.start();
-      osc.stop(this.ctx.currentTime + duration);
+      osc.stop(this.audioCtx.currentTime + duration);
     } catch (e) {
-      console.warn('Audio playback error', e);
+      console.warn('Audio tone error', e);
     }
   }
 
   tick() {
-    this.playTone(600, 'triangle', 0.05, 0.1);
+    this.playTone(600, 'triangle', 0.05, 0.12);
+    if ('vibrate' in navigator) navigator.vibrate(10);
   }
 
   beepLow() {
-    this.playTone(440, 'sine', 0.15, 0.25);
+    this.playTone(480, 'sine', 0.15, 0.25);
   }
 
   beepHigh() {
-    this.playTone(880, 'sine', 0.25, 0.3);
+    this.playTone(880, 'sine', 0.28, 0.35);
   }
 
   celebrate() {
-    if (!this.enabled) return;
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    if (!this.soundEnabled) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
     notes.forEach((freq, idx) => {
-      setTimeout(() => {
-        this.playTone(freq, 'triangle', 0.25, 0.3);
-      }, idx * 120);
+      setTimeout(() => this.playTone(freq, 'triangle', 0.25, 0.3), idx * 110);
     });
+    if ('vibrate' in navigator) navigator.vibrate([40, 60, 40, 100]);
+  }
+
+  speak(text) {
+    if (!this.speechEnabled || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel(); // Don't queue outdated calls
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'he-IL';
+      utt.rate = 1.05;
+      utt.pitch = 1.0;
+      window.speechSynthesis.speak(utt);
+    } catch (e) {
+      console.warn('Speech error', e);
+    }
+  }
+
+  async requestWakeLock() {
+    if (!this.wakeLockEnabled || !('wakeLock' in navigator)) return;
+    try {
+      if (!this.wakeLock) {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        this.wakeLock.addEventListener('release', () => {
+          this.wakeLock = null;
+        });
+      }
+    } catch (e) {
+      console.log('WakeLock not granted or supported:', e);
+    }
+  }
+
+  releaseWakeLock() {
+    if (this.wakeLock) {
+      this.wakeLock.release().catch(() => {});
+      this.wakeLock = null;
+    }
   }
 }
 
-const sfx = new SoundFX();
+const voice = new VoiceAssistant();
 
 // 3. Application State
 const state = {
@@ -188,6 +221,7 @@ const state = {
   activeExercise: null,
   activeOption: null,
   isRolling: false,
+  activeFilter: 'all',
   
   // Timer state for Plank
   timer: {
@@ -202,7 +236,7 @@ const state = {
     totalPhaseDuration: 5
   },
 
-  // Reps state for pushups, crunches, sun salutation
+  // Reps state
   reps: {
     current: 0,
     target: 10
@@ -212,11 +246,20 @@ const state = {
 // 4. DOM Elements Cache
 const DOM = {
   drawBtn: document.getElementById('draw-btn'),
-  soundToggleBtn: document.getElementById('sound-toggle-btn'),
-  soundIcon: document.getElementById('sound-icon'),
+  quickDrawBtn: document.getElementById('quick-draw-btn'),
+  quickTrainerBtn: document.getElementById('quick-trainer-btn'),
   lotteryDisplay: document.getElementById('lottery-display'),
   catalogGrid: document.getElementById('catalog-grid'),
+  catalogFilters: document.getElementById('catalog-filters'),
 
+  // Header quick tools
+  voiceToggleBtn: document.getElementById('voice-toggle-btn'),
+  voiceIcon: document.getElementById('voice-icon'),
+  soundToggleBtn: document.getElementById('sound-toggle-btn'),
+  soundIcon: document.getElementById('sound-icon'),
+  wakelockToggleBtn: document.getElementById('wakelock-toggle-btn'),
+
+  // Trainer elements
   trainerContainer: document.getElementById('trainer-container'),
   trainerTypeBadge: document.getElementById('trainer-type-badge'),
   trainerTitle: document.getElementById('trainer-exercise-title'),
@@ -256,15 +299,25 @@ const DOM = {
   confettiCanvas: document.getElementById('confetti-canvas')
 };
 
-// 5. Render Exercise Catalog Grid
-function renderCatalog() {
+// 5. Render Exercise Catalog Grid with Filters & Clickable Variations
+function renderCatalog(filterKey = 'all') {
   DOM.catalogGrid.innerHTML = '';
   
-  EXERCISES.forEach((ex) => {
+  const filtered = filterKey === 'all' 
+    ? EXERCISES 
+    : EXERCISES.filter(e => e.categoryKey === filterKey);
+
+  filtered.forEach((ex) => {
     const card = document.createElement('article');
     card.className = 'exercise-card';
     
-    const optionsHtml = ex.options.map(opt => `<span class="var-pill">${opt.text}</span>`).join('');
+    // Build interactive variation buttons
+    const optionsHtml = ex.options.map((opt, idx) => `
+      <button class="var-pill-btn" onclick="startSpecificOption('${ex.id}', ${idx})" title="התחל תרגול זה מיד">
+        <span>${opt.text}</span>
+        <span class="play-hint">▶ בחר</span>
+      </button>
+    `).join('');
 
     card.innerHTML = `
       <div class="card-img-wrap">
@@ -279,17 +332,17 @@ function renderCatalog() {
         <p class="card-desc">${ex.description}</p>
         
         <div class="card-variations-box">
-          <span class="variations-title">אופציות הגרלה לבגרות ולכושר:</span>
+          <span class="variations-title">⚡ בחר וריאציה לאימון מיידי:</span>
           <div class="variation-pill-list">
             ${optionsHtml}
           </div>
         </div>
 
-        <div class="card-actions">
-          <button class="btn btn-primary" onclick="startExerciseDirectly('${ex.id}')">
+        <div class="card-actions action-btn-group grid-2">
+          <button class="btn btn-primary btn-md" onclick="startExerciseDirectly('${ex.id}')">
             <span>⚡ התחל תרגיל</span>
           </button>
-          <button class="btn btn-outline" onclick="openExerciseGuide('${ex.id}')">
+          <button class="btn btn-outline btn-md" onclick="openExerciseGuide('${ex.id}')">
             <span>ℹ️ דגשים והסבר</span>
           </button>
         </div>
@@ -299,24 +352,32 @@ function renderCatalog() {
   });
 }
 
-// 6. Lottery Randomizer Logic
+// 6. Direct start of specific option
+window.startSpecificOption = function(exId, optionIdx) {
+  const ex = EXERCISES.find(e => e.id === exId);
+  if (!ex) return;
+  const opt = ex.options[optionIdx] || ex.options[0];
+  renderDrawnResult(ex, opt);
+  setupTrainer(ex, opt);
+};
+
+// 7. Lottery Randomizer Logic (Snappy & Accessible)
 function drawRandomExercise() {
   if (state.isRolling) return;
   state.isRolling = true;
-  sfx.init();
+  voice.initAudio();
 
   let count = 0;
-  const maxTicks = 14;
-  const intervalTime = 90;
+  const maxTicks = 12;
+  const intervalTime = 80;
 
   DOM.drawBtn.disabled = true;
-  DOM.drawBtn.style.opacity = '0.7';
+  DOM.quickDrawBtn.disabled = true;
 
   const rollInterval = setInterval(() => {
     count++;
-    sfx.tick();
+    voice.tick();
 
-    // Pick random for display animation
     const randEx = EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
     const randOpt = randEx.options[Math.floor(Math.random() * randEx.options.length)];
 
@@ -332,23 +393,21 @@ function drawRandomExercise() {
       clearInterval(rollInterval);
       state.isRolling = false;
       DOM.drawBtn.disabled = false;
-      DOM.drawBtn.style.opacity = '1';
+      DOM.quickDrawBtn.disabled = false;
 
-      // Pick final deterministic choice
       const finalEx = EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
-      const finalOpt = finalEx.options[Math.floor(Math.random() * finalOptLength(finalEx))];
+      const finalOpt = finalEx.options[Math.floor(Math.random() * finalEx.options.length)];
 
       state.currentDrawn = { exercise: finalEx, option: finalOpt };
-      sfx.beepHigh();
+      voice.beepHigh();
 
       renderDrawnResult(finalEx, finalOpt);
       setupTrainer(finalEx, finalOpt);
+
+      // Voice prompt announcement
+      voice.speak(`הוגרל: ${finalEx.name}, ${finalOpt.text}`);
     }
   }, intervalTime);
-}
-
-function finalOptLength(ex) {
-  return ex.options.length;
 }
 
 function renderDrawnResult(ex, opt) {
@@ -365,14 +424,18 @@ function renderDrawnResult(ex, opt) {
   `;
 }
 
-// 7. Trainer Setup (Timed or Reps)
+// 8. Trainer Setup (Timed or Reps)
 function setupTrainer(ex, opt) {
   state.activeExercise = ex;
   state.activeOption = opt;
 
   DOM.trainerContainer.classList.remove('hidden');
+  DOM.quickTrainerBtn.classList.remove('hidden');
   DOM.trainerTitle.textContent = `${ex.icon} ${ex.name}`;
-  DOM.trainerDesc.textContent = `אתגר מוגדר: ${opt.text}`;
+  DOM.trainerDesc.textContent = `אתגר נבחר: ${opt.text}`;
+
+  // Request WakeLock to keep screen on while training on mat
+  voice.requestWakeLock();
 
   if (ex.type === 'timed-interval') {
     DOM.trainerTypeBadge.textContent = '⏱️ אינטרוולים מתוזמנים';
@@ -386,12 +449,11 @@ function setupTrainer(ex, opt) {
     initRepsCounter(opt.reps, opt.unit || 'חזרות');
   }
 
-  // Smooth scroll to trainer
   DOM.trainerContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// 8. Timed Interval Engine (Plank)
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 85; // 534.07
+// 9. Timed Interval Engine (Plank) with Voice Cues
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 95; // 596.9
 
 function initPlankTimer(sets, workSec, restSec) {
   clearInterval(state.timer.intervalId);
@@ -427,7 +489,6 @@ function updateTimerDisplay() {
     DOM.timerProgressRing.classList.add('rest');
   }
 
-  // Update SVG ring
   const fraction = timeLeft / totalPhaseDuration;
   const offset = CIRCLE_CIRCUMFERENCE * (1 - fraction);
   DOM.timerProgressRing.style.strokeDashoffset = offset;
@@ -442,19 +503,21 @@ function toggleTimer() {
 }
 
 function startTimer() {
-  sfx.init();
+  voice.initAudio();
   state.timer.isRunning = true;
   setTimerButtonState(true);
+  voice.speak('התחל עבודה');
 
   state.timer.intervalId = setInterval(() => {
     state.timer.timeLeft--;
 
+    // Countdown sounds in last 3 seconds
     if (state.timer.timeLeft > 0 && state.timer.timeLeft <= 3) {
-      sfx.beepLow();
+      voice.beepLow();
+      voice.speak(`${state.timer.timeLeft}`);
     }
 
     if (state.timer.timeLeft <= 0) {
-      // Phase transition
       handlePhaseTransition();
     } else {
       updateTimerDisplay();
@@ -466,21 +529,20 @@ function handlePhaseTransition() {
   const t = state.timer;
   if (t.phase === 'work') {
     if (t.currentSet >= t.totalSets) {
-      // Workout Finished!
       completePlankWorkout();
       return;
     }
-    // Switch to Rest
-    sfx.beepHigh();
+    voice.beepHigh();
+    voice.speak('מנוחה');
     t.phase = 'rest';
     t.timeLeft = t.restSec;
     t.totalPhaseDuration = t.restSec;
     updateTimerDisplay();
   } else {
-    // Switch back to Work on next set
-    sfx.beepHigh();
+    voice.beepHigh();
     t.phase = 'work';
     t.currentSet++;
+    voice.speak(`סט ${t.currentSet}, עבודה`);
     t.timeLeft = t.workSec;
     t.totalPhaseDuration = t.workSec;
     updateTimerDisplay();
@@ -491,6 +553,7 @@ function pauseTimer() {
   clearInterval(state.timer.intervalId);
   state.timer.isRunning = false;
   setTimerButtonState(false);
+  voice.speak('הושהה');
 }
 
 function resetTimer() {
@@ -504,21 +567,22 @@ function setTimerButtonState(running) {
   if (running) {
     DOM.timerBtnIcon.textContent = '⏸';
     DOM.timerBtnText.textContent = 'השהה';
-    DOM.timerStartPauseBtn.className = 'btn btn-secondary';
+    DOM.timerStartPauseBtn.className = 'btn btn-secondary btn-lg';
   } else {
     DOM.timerBtnIcon.textContent = '▶';
     DOM.timerBtnText.textContent = 'התחל אימון';
-    DOM.timerStartPauseBtn.className = 'btn btn-success';
+    DOM.timerStartPauseBtn.className = 'btn btn-success btn-lg';
   }
 }
 
 function completePlankWorkout() {
   pauseTimer();
-  sfx.celebrate();
+  voice.celebrate();
+  voice.speak('כל הכבוד! סיימת את הפלאנק!');
   triggerCelebration('אלופים! השלמתם את כל סטי הפלאנק בדיוק לפי ההנחיות לבגרות!');
 }
 
-// 9. Reps Counter Engine
+// 10. Reps Counter Engine
 function initRepsCounter(targetReps, unitName) {
   state.reps.current = 0;
   state.reps.target = targetReps;
@@ -529,15 +593,19 @@ function initRepsCounter(targetReps, unitName) {
 }
 
 function incrementRep() {
-  sfx.init();
+  voice.initAudio();
   if (state.reps.current < state.reps.target) {
     state.reps.current++;
-    sfx.tick();
+    voice.tick();
     updateRepsDisplay();
 
+    // Voice announce every few reps or near end
     if (state.reps.current === state.reps.target) {
-      sfx.celebrate();
+      voice.celebrate();
+      voice.speak('היעד הושלם! כל הכבוד!');
       triggerCelebration(`כל הכבוד! הגעתם ליעד של ${state.reps.target} חזרות מלאות!`);
+    } else if (state.reps.current % 5 === 0) {
+      voice.speak(`${state.reps.current}`);
     }
   }
 }
@@ -558,26 +626,25 @@ function updateRepsDisplay() {
 function completeRepsDirectly() {
   state.reps.current = state.reps.target;
   updateRepsDisplay();
-  sfx.celebrate();
+  voice.celebrate();
+  voice.speak('תרגיל הושלם בהצלחה!');
   triggerCelebration(`מדהים! השלמתם את תרגיל ה-${state.activeExercise.name} בהצלחה!`);
 }
 
-// 10. Start Exercise directly from catalog
+// 11. Modal Dialogs & Helpers
 window.startExerciseDirectly = function(exId) {
   const ex = EXERCISES.find(e => e.id === exId);
   if (!ex) return;
-  // Pick first or random option
   const opt = ex.options[0];
   renderDrawnResult(ex, opt);
   setupTrainer(ex, opt);
 };
 
-// 11. Modal Dialogs (Exercise Technique Guide)
 window.openExerciseGuide = function(exId) {
   const ex = EXERCISES.find(e => e.id === exId);
   if (!ex) return;
 
-  DOM.dialogTitle.textContent = `${ex.icon} ${ex.name} - מדריך טכניקה`;
+  DOM.dialogTitle.textContent = `${ex.icon} ${ex.name} - דגשי טכניקה`;
   
   const tipsList = ex.bagrutTips.map(tip => `<li>${tip}</li>`).join('');
   const mistakesList = ex.commonMistakes.map(m => `<li>${m}</li>`).join('');
@@ -598,11 +665,11 @@ window.openExerciseGuide = function(exId) {
       <ul>${mistakesList}</ul>
     </div>
 
-    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-      <button class="btn btn-primary" style="flex: 1;" onclick="startExerciseFromDialog('${ex.id}')">
+    <div class="action-btn-group grid-2" style="margin-top: 1rem;">
+      <button class="btn btn-primary btn-md" onclick="startExerciseFromDialog('${ex.id}')">
         ⚡ התחל אימון זה עכשיו
       </button>
-      <button class="btn btn-outline" onclick="DOM.exerciseDialog.close()">
+      <button class="btn btn-outline btn-md" onclick="DOM.exerciseDialog.close()">
         סגור
       </button>
     </div>
@@ -699,15 +766,54 @@ if (!('closedBy' in HTMLDialogElement.prototype)) {
 // 14. Event Listeners Setup
 function initEventListeners() {
   DOM.drawBtn.addEventListener('click', drawRandomExercise);
+  DOM.quickDrawBtn.addEventListener('click', () => {
+    drawRandomExercise();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
+  DOM.quickTrainerBtn.addEventListener('click', () => {
+    DOM.trainerContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // Sound toggle
   DOM.soundToggleBtn.addEventListener('click', () => {
-    sfx.enabled = !sfx.enabled;
-    DOM.soundIcon.textContent = sfx.enabled ? '🔊' : '🔇';
+    voice.soundEnabled = !voice.soundEnabled;
+    DOM.soundToggleBtn.classList.toggle('active', voice.soundEnabled);
+    DOM.soundIcon.textContent = voice.soundEnabled ? '🔊' : '🔇';
+  });
+
+  // Voice toggle
+  DOM.voiceToggleBtn.addEventListener('click', () => {
+    voice.speechEnabled = !voice.speechEnabled;
+    DOM.voiceToggleBtn.classList.toggle('active', voice.speechEnabled);
+    DOM.voiceIcon.textContent = voice.speechEnabled ? '🗣️' : '🤫';
+  });
+
+  // WakeLock toggle
+  DOM.wakelockToggleBtn.addEventListener('click', () => {
+    voice.wakeLockEnabled = !voice.wakeLockEnabled;
+    DOM.wakelockToggleBtn.classList.toggle('active', voice.wakeLockEnabled);
+    if (voice.wakeLockEnabled) {
+      voice.requestWakeLock();
+    } else {
+      voice.releaseWakeLock();
+    }
   });
 
   DOM.closeTrainerBtn.addEventListener('click', () => {
     clearInterval(state.timer.intervalId);
     DOM.trainerContainer.classList.add('hidden');
+    DOM.quickTrainerBtn.classList.add('hidden');
+    voice.releaseWakeLock();
+  });
+
+  // Category Filters
+  DOM.catalogFilters.addEventListener('click', (e) => {
+    const chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    renderCatalog(chip.dataset.filter);
   });
 
   // Timer controls
@@ -730,6 +836,6 @@ function initEventListeners() {
 
 // 15. Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  renderCatalog();
+  renderCatalog('all');
   initEventListeners();
 });
