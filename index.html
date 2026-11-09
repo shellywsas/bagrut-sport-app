@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ספורט פאן ⚡ הגרלת תרגילים לבגרות בספורט ולכושר אישי</title>
+  <meta name="description" content="אפליקציה ספורטיבית קלילה ונעימה להגרלת תרגילי כושר לבגרות בספורט: פלאנק, ברכת השמש, כפיפות בטן ושכיבות סמיכה עם טיימר אינטראקטיבי והסברים.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Navbar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <span class="brand-icon">⚡</span>
+        <div>
+          <h1 class="brand-title">SportBagrut <span class="brand-badge">בגרות & כושר</span></h1>
+          <p class="brand-subtitle">הגרלת אימונים ותרגילים קלילים ומדויקים</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#lottery-section" class="nav-link active">🎲 הגרלה</a>
+        <a href="#catalog-section" class="nav-link">📋 כל התרגילים</a>
+        <a href="#tips-section" class="nav-link">💡 טיפים לבגרות</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <!-- Hero / Lottery Section -->
+    <section id="lottery-section" class="hero-section">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <span class="tag-pill">🎯 מוכנים לאתגר הבא?</span>
+          <h2>מה התרגיל שלך להיום?</h2>
+          <p>לחצו על כפתור ההגרלה כדי לקבל תרגיל עם מספר חזרות או זמנים מותאמים אישית לבגרות בספורט ובריאות הגוף!</p>
+        </div>
+
+        <!-- Lottery Machine Card -->
+        <div class="lottery-card">
+          <div class="lottery-display" id="lottery-display">
+            <div class="lottery-placeholder">
+              <div class="dice-bounce">🎲</div>
+              <p>לחצו על הכפתור למטה להגרלת תרגיל פתע!</p>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="lottery-actions">
+            <button id="draw-btn" class="btn btn-primary btn-large">
+              <span class="btn-icon">⚡</span>
+              <span>הגרל לי תרגיל עכשיו!</span>
+            </button>
+            <button id="sound-toggle-btn" class="btn btn-outline" title="הפעל / השתק צלילים">
+              <span id="sound-icon">🔊</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Workout Trainer Container (appears when exercise is drawn or selected) -->
+      <div id="trainer-container" class="trainer-container hidden" aria-live="polite">
+        <div class="trainer-header">
+          <div class="trainer-title-wrap">
+            <span class="trainer-badge" id="trainer-type-badge">אימון מתוזמן</span>
+            <h3 id="trainer-exercise-title">שם התרגיל</h3>
+            <p id="trainer-param-desc">הגדרת האימון</p>
+          </div>
+          <button id="close-trainer-btn" class="btn-close-subtle" title="סגור אימון">✕</button>
+        </div>
+
+        <div class="trainer-body">
+          <!-- Timed Plank Interface -->
+          <div id="timed-interface" class="interface-pane hidden">
+            <div class="timer-visual">
+              <svg class="progress-ring" viewBox="0 0 200 200">
+                <circle class="ring-bg" cx="100" cy="100" r="85"></circle>
+                <circle class="ring-progress" id="timer-progress-ring" cx="100" cy="100" r="85"></circle>
+              </svg>
+              <div class="timer-display-inner">
+                <span class="phase-tag" id="timer-phase-tag">מוכן</span>
+                <span class="timer-digits" id="timer-digits">00:00</span>
+                <span class="round-indicator" id="timer-round-indicator">סט 0 מתוך 0</span>
+              </div>
+            </div>
+
+            <div class="timer-controls">
+              <button id="timer-start-pause-btn" class="btn btn-success">
+                <span id="timer-btn-icon">▶</span> <span id="timer-btn-text">התחל</span>
+              </button>
+              <button id="timer-reset-btn" class="btn btn-secondary">איפוס</button>
+            </div>
+          </div>
+
+          <!-- Rep-based Interface (Pushups, Crunches, Sun Salutations) -->
+          <div id="reps-interface" class="interface-pane hidden">
+            <div class="reps-visual">
+              <div class="reps-counter-circle">
+                <span class="reps-current" id="reps-current-num">0</span>
+                <span class="reps-target-label" id="reps-target-label">מתוך 10</span>
+              </div>
+              <div class="reps-progress-bar-wrap">
+                <div class="reps-progress-bar-fill" id="reps-bar-fill"></div>
+              </div>
+            </div>
+
+            <div class="reps-controls">
+              <button id="rep-minus-btn" class="btn btn-round btn-outline" title="הורד חזרה">-</button>
+              <button id="rep-plus-btn" class="btn btn-round btn-primary" title="סמן חזרה נוספת">+ חזרה</button>
+              <button id="rep-complete-btn" class="btn btn-success">סיימתי את כל החזרות! 🎉</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Exercise Catalog Section -->
+    <section id="catalog-section" class="catalog-section">
+      <div class="section-header">
+        <span class="tag-pill">📋 מאגר התרגילים</span>
+        <h2>כל התרגילים והאפשרויות</h2>
+        <p>סקירה מפורטת של התרגילים, אופציות ההגרלה ודגשים טכניים חשובים לבגרות בספורט</p>
+      </div>
+
+      <div class="catalog-grid" id="catalog-grid">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- Bagrut Tips Section -->
+    <section id="tips-section" class="tips-section">
+      <div class="section-header">
+        <span class="tag-pill">💡 הכנה לבגרות</span>
+        <h2>דגשים וטיפים מנצחים לבגרות בספורט</h2>
+        <p>איך לבצע כל תרגיל נכון, לשמור על הגב ולזכות בציון מקסימלי</p>
+      </div>
+
+      <div class="tips-grid">
+        <div class="tip-card">
+          <div class="tip-icon">🧘‍♂️</div>
+          <h3>נשימה רציפה ומבוקרת</h3>
+          <p>בפלאנק ובכל תרגיל כוח לעולם אל תעצרו את הנשימה! הוציאו אוויר במאמץ (למשל בעלייה בכפיפות בטן או שכיבות סמיכה) והכניסו אוויר בירידה.</p>
+        </div>
+
+        <div class="tip-card">
+          <div class="tip-icon">📐</div>
+          <h3>קו ישר של עמוד השדרה</h3>
+          <p>בפלאנק ובשכיבות סמיכה, הימנעו מקריסה של האגן למטה או מהרמתו למעלה בצורת משולש. שמרו על בטן אסופה ומבט אל המזרן.</p>
+        </div>
+
+        <div class="tip-card">
+          <div class="tip-icon">☀️</div>
+          <h3>זרימה והארכה בברכת השמש</h3>
+          <p>ברכת השמש מחממת את כל המפרקים ומשפרת גמישות. שמרו על תנועות רכות, מעברים חלקים ללא תנועות פתאומיות והקשבה למתיחת השרירים.</p>
+        </div>
+
+        <div class="tip-card">
+          <div class="tip-icon">🎯</div>
+          <h3>עקביות עדיפה על מהירות</h3>
+          <p>עדיף לבצע 10 כפיפות בטן איטיות ומדויקות עם שרירי בטן מגויסים מאשר 20 כפיפות מהירות שמעמיסות על הצוואר.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modern Modal Dialog for Exercise Detail / Technique Guide -->
+  <dialog id="exercise-dialog" closedby="any" aria-labelledby="dialog-exercise-title">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 id="dialog-exercise-title">פירוט תרגיל</h3>
+        <button type="button" class="btn-close" id="dialog-close-btn" aria-label="סגור">✕</button>
+      </div>
+      <div class="dialog-body" id="dialog-body">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Completion Celebration Modal -->
+  <dialog id="celebrate-dialog" closedby="any" aria-labelledby="celebrate-title">
+    <div class="dialog-content celebrate-modal">
+      <div class="celebrate-icon">🏆</div>
+      <h3 id="celebrate-title">אלופים! כל הכבוד!</h3>
+      <p id="celebrate-message">סיימתם את התרגיל בהצלחה יתרה!</p>
+      <div class="celebrate-actions">
+        <button type="button" class="btn btn-primary" id="celebrate-draw-next-btn">🎲 הגרל אתגר נוסף</button>
+        <button type="button" class="btn btn-outline" id="celebrate-close-btn">סגור</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>⚡ <strong>SportBagrut</strong> - נוצר באהבה עבור בגרות בספורט וכושר אישי מהנה ובריא.</p>
+      <p class="footer-sub">מתאים לכל מסך • מחשב, טאבלט וסמארטפון</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
