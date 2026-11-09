@@ -1,6 +1,6 @@
 /**
  * SportBagrut - אפליקציית כושר והגרלת תרגילים לבגרות בספורט
- * גרסה משודרגת: ארגונומית, פרקטית, שליטה קולית וממשק מותאם למזרן
+ * גרסה מודולרית: ניווט טאבים נקי (ללא גלילה מיותרת) ומסך אימון מלא ייעודי
  */
 
 // 1. Data Store: Exercises and their exact options as requested
@@ -114,17 +114,15 @@ const EXERCISES = [
   }
 ];
 
-// 2. Audio & Speech Assistant (Hands-Free for Mat Workout)
-class VoiceAssistant {
+// 2. Audio & Speech Assistant
+class AudioEngine {
   constructor() {
-    this.speechEnabled = true;
     this.soundEnabled = true;
-    this.wakeLock = null;
-    this.wakeLockEnabled = true;
     this.audioCtx = null;
+    this.wakeLock = null;
   }
 
-  initAudio() {
+  init() {
     if (!this.audioCtx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.audioCtx = new AudioCtx();
@@ -136,7 +134,7 @@ class VoiceAssistant {
 
   playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.2) {
     if (!this.soundEnabled) return;
-    this.initAudio();
+    this.init();
     if (!this.audioCtx) return;
 
     try {
@@ -151,13 +149,12 @@ class VoiceAssistant {
       osc.start();
       osc.stop(this.audioCtx.currentTime + duration);
     } catch (e) {
-      console.warn('Audio tone error', e);
+      console.warn('Audio error', e);
     }
   }
 
   tick() {
-    this.playTone(600, 'triangle', 0.05, 0.12);
-    if ('vibrate' in navigator) navigator.vibrate(10);
+    this.playTone(600, 'triangle', 0.05, 0.1);
   }
 
   beepLow() {
@@ -165,7 +162,7 @@ class VoiceAssistant {
   }
 
   beepHigh() {
-    this.playTone(880, 'sine', 0.28, 0.35);
+    this.playTone(880, 'sine', 0.25, 0.35);
   }
 
   celebrate() {
@@ -178,13 +175,12 @@ class VoiceAssistant {
   }
 
   speak(text) {
-    if (!this.speechEnabled || !('speechSynthesis' in window)) return;
+    if (!this.soundEnabled || !('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel(); // Don't queue outdated calls
+      window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
       utt.lang = 'he-IL';
       utt.rate = 1.05;
-      utt.pitch = 1.0;
       window.speechSynthesis.speak(utt);
     } catch (e) {
       console.warn('Speech error', e);
@@ -192,16 +188,14 @@ class VoiceAssistant {
   }
 
   async requestWakeLock() {
-    if (!this.wakeLockEnabled || !('wakeLock' in navigator)) return;
+    if (!('wakeLock' in navigator)) return;
     try {
       if (!this.wakeLock) {
         this.wakeLock = await navigator.wakeLock.request('screen');
-        this.wakeLock.addEventListener('release', () => {
-          this.wakeLock = null;
-        });
+        this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
       }
     } catch (e) {
-      console.log('WakeLock not granted or supported:', e);
+      console.log('WakeLock not granted:', e);
     }
   }
 
@@ -213,7 +207,7 @@ class VoiceAssistant {
   }
 }
 
-const voice = new VoiceAssistant();
+const audio = new AudioEngine();
 
 // 3. Application State
 const state = {
@@ -221,13 +215,13 @@ const state = {
   activeExercise: null,
   activeOption: null,
   isRolling: false,
-  activeFilter: 'all',
-  
+  activeTab: 'tab-lottery',
+
   // Timer state for Plank
   timer: {
     isRunning: false,
     intervalId: null,
-    phase: 'work', // 'work' or 'rest'
+    phase: 'work',
     currentSet: 1,
     totalSets: 1,
     workSec: 5,
@@ -245,46 +239,44 @@ const state = {
 
 // 4. DOM Elements Cache
 const DOM = {
-  drawBtn: document.getElementById('draw-btn'),
-  quickDrawBtn: document.getElementById('quick-draw-btn'),
-  quickTrainerBtn: document.getElementById('quick-trainer-btn'),
-  lotteryDisplay: document.getElementById('lottery-display'),
-  catalogGrid: document.getElementById('catalog-grid'),
-  catalogFilters: document.getElementById('catalog-filters'),
-
-  // Header quick tools
-  voiceToggleBtn: document.getElementById('voice-toggle-btn'),
-  voiceIcon: document.getElementById('voice-icon'),
+  tabButtons: document.querySelectorAll('.tab-btn'),
+  viewPanels: document.querySelectorAll('.view-panel'),
+  
   soundToggleBtn: document.getElementById('sound-toggle-btn'),
   soundIcon: document.getElementById('sound-icon'),
-  wakelockToggleBtn: document.getElementById('wakelock-toggle-btn'),
+  mainDrawBtn: document.getElementById('main-draw-btn'),
+  catalogGrid: document.getElementById('catalog-grid'),
 
-  // Trainer elements
-  trainerContainer: document.getElementById('trainer-container'),
-  trainerTypeBadge: document.getElementById('trainer-type-badge'),
-  trainerTitle: document.getElementById('trainer-exercise-title'),
-  trainerDesc: document.getElementById('trainer-param-desc'),
-  closeTrainerBtn: document.getElementById('close-trainer-btn'),
+  // Fullscreen Workout Overlay
+  fullscreenWorkout: document.getElementById('fullscreen-workout'),
+  exitWorkoutBtn: document.getElementById('exit-workout-btn'),
+  wkTitle: document.getElementById('wk-title'),
+  wkBadge: document.getElementById('wk-badge'),
+  wkImage: document.getElementById('wk-image'),
+  wkSpec: document.getElementById('wk-spec'),
+  wkSoundBtn: document.getElementById('wk-sound-btn'),
+  wkSoundIcon: document.getElementById('wk-sound-icon'),
+  wkTechniqueTip: document.getElementById('wk-technique-tip'),
 
-  // Timed elements
-  timedInterface: document.getElementById('timed-interface'),
-  timerDigits: document.getElementById('timer-digits'),
-  timerPhaseTag: document.getElementById('timer-phase-tag'),
-  timerRoundIndicator: document.getElementById('timer-round-indicator'),
-  timerProgressRing: document.getElementById('timer-progress-ring'),
-  timerStartPauseBtn: document.getElementById('timer-start-pause-btn'),
-  timerBtnIcon: document.getElementById('timer-btn-icon'),
-  timerBtnText: document.getElementById('timer-btn-text'),
+  // Fullscreen Timed Elements
+  wkTimedBox: document.getElementById('wk-timed-box'),
+  timerRing: document.getElementById('timer-ring'),
+  wkPhaseBadge: document.getElementById('wk-phase-badge'),
+  wkTimerDigits: document.getElementById('wk-timer-digits'),
+  wkRoundCount: document.getElementById('wk-round-count'),
+  timerToggleBtn: document.getElementById('timer-toggle-btn'),
+  timerActionIcon: document.getElementById('timer-action-icon'),
+  timerActionText: document.getElementById('timer-action-text'),
   timerResetBtn: document.getElementById('timer-reset-btn'),
 
-  // Reps elements
-  repsInterface: document.getElementById('reps-interface'),
-  repsCurrentNum: document.getElementById('reps-current-num'),
-  repsTargetLabel: document.getElementById('reps-target-label'),
-  repsBarFill: document.getElementById('reps-bar-fill'),
-  repMinusBtn: document.getElementById('rep-minus-btn'),
-  repPlusBtn: document.getElementById('rep-plus-btn'),
-  repCompleteBtn: document.getElementById('rep-complete-btn'),
+  // Fullscreen Reps Elements
+  wkRepsBox: document.getElementById('wk-reps-box'),
+  wkRepsCurrent: document.getElementById('wk-reps-current'),
+  wkRepsTarget: document.getElementById('wk-reps-target'),
+  wkRepsBar: document.getElementById('wk-reps-bar'),
+  repIncBtn: document.getElementById('rep-inc-btn'),
+  repDecBtn: document.getElementById('rep-dec-btn'),
+  repFinishBtn: document.getElementById('rep-finish-btn'),
 
   // Dialogs
   exerciseDialog: document.getElementById('exercise-dialog'),
@@ -294,28 +286,42 @@ const DOM = {
 
   celebrateDialog: document.getElementById('celebrate-dialog'),
   celebrateMsg: document.getElementById('celebrate-message'),
-  celebrateDrawNextBtn: document.getElementById('celebrate-draw-next-btn'),
+  celebrateNextBtn: document.getElementById('celebrate-next-btn'),
   celebrateCloseBtn: document.getElementById('celebrate-close-btn'),
   confettiCanvas: document.getElementById('confetti-canvas')
 };
 
-// 5. Render Exercise Catalog Grid with Filters & Clickable Variations
-function renderCatalog(filterKey = 'all') {
-  DOM.catalogGrid.innerHTML = '';
-  
-  const filtered = filterKey === 'all' 
-    ? EXERCISES 
-    : EXERCISES.filter(e => e.categoryKey === filterKey);
+// 5. Tab Switching (No single long scroll - purely separate views)
+function switchTab(targetTabId) {
+  state.activeTab = targetTabId;
 
-  filtered.forEach((ex) => {
+  // Update tab buttons
+  DOM.tabButtons.forEach(btn => {
+    const isActive = btn.dataset.tab === targetTabId;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive);
+  });
+
+  // Update view panels
+  DOM.viewPanels.forEach(panel => {
+    panel.classList.toggle('active', panel.id === targetTabId);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 6. Render Exercise Catalog Grid
+function renderCatalog() {
+  DOM.catalogGrid.innerHTML = '';
+
+  EXERCISES.forEach((ex) => {
     const card = document.createElement('article');
     card.className = 'exercise-card';
-    
-    // Build interactive variation buttons
+
     const optionsHtml = ex.options.map((opt, idx) => `
-      <button class="var-pill-btn" onclick="startSpecificOption('${ex.id}', ${idx})" title="התחל תרגול זה מיד">
+      <button class="var-pill-btn" onclick="startSpecificOption('${ex.id}', ${idx})" title="בחר וריאציה זו והתחל אימון במסך מלא">
         <span>${opt.text}</span>
-        <span class="play-hint">▶ בחר</span>
+        <span class="play-hint">▶ התחל</span>
       </button>
     `).join('');
 
@@ -332,17 +338,17 @@ function renderCatalog(filterKey = 'all') {
         <p class="card-desc">${ex.description}</p>
         
         <div class="card-variations-box">
-          <span class="variations-title">⚡ בחר וריאציה לאימון מיידי:</span>
+          <span class="variations-title">⚡ אפשרויות הגרלה ואימון:</span>
           <div class="variation-pill-list">
             ${optionsHtml}
           </div>
         </div>
 
-        <div class="card-actions action-btn-group grid-2">
-          <button class="btn btn-primary btn-md" onclick="startExerciseDirectly('${ex.id}')">
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchWorkout('${ex.id}', 0)">
             <span>⚡ התחל תרגיל</span>
           </button>
-          <button class="btn btn-outline btn-md" onclick="openExerciseGuide('${ex.id}')">
+          <button class="btn btn-outline" onclick="openExerciseGuide('${ex.id}')">
             <span>ℹ️ דגשים והסבר</span>
           </button>
         </div>
@@ -352,108 +358,96 @@ function renderCatalog(filterKey = 'all') {
   });
 }
 
-// 6. Direct start of specific option
-window.startSpecificOption = function(exId, optionIdx) {
-  const ex = EXERCISES.find(e => e.id === exId);
-  if (!ex) return;
-  const opt = ex.options[optionIdx] || ex.options[0];
-  renderDrawnResult(ex, opt);
-  setupTrainer(ex, opt);
+// 7. Fullscreen Workout Arena: Open & Close (עם יציאה נוחה אם מוותרים)
+function openWorkoutArena(ex, opt) {
+  state.activeExercise = ex;
+  state.activeOption = opt;
+
+  // Update Header details
+  DOM.wkTitle.textContent = `${ex.icon} ${ex.name}`;
+  DOM.wkBadge.textContent = ex.category;
+  DOM.wkImage.src = ex.image;
+  DOM.wkImage.style.display = 'block';
+  DOM.wkSpec.textContent = opt.text;
+  DOM.wkTechniqueTip.textContent = `דגש: ${ex.bagrutTips[0]}`;
+
+  audio.requestWakeLock();
+
+  if (ex.type === 'timed-interval') {
+    DOM.wkTimedBox.classList.remove('hidden');
+    DOM.wkRepsBox.classList.add('hidden');
+    initPlankTimer(opt.sets, opt.workSec, opt.restSec);
+  } else {
+    DOM.wkTimedBox.classList.add('hidden');
+    DOM.wkRepsBox.classList.remove('hidden');
+    initRepsCounter(opt.reps, opt.unit || 'חזרות');
+  }
+
+  // Show fullscreen overlay
+  DOM.fullscreenWorkout.classList.remove('hidden');
+  document.body.style.overflow = 'hidden'; // Lock background scroll
+
+  // Voice welcome
+  audio.speak(`הוגרל ${ex.name}: ${opt.text}`);
+}
+
+function closeWorkoutArena() {
+  pauseTimer();
+  audio.releaseWakeLock();
+  DOM.fullscreenWorkout.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// 8. Specific Launch
+window.startSpecificOption = function(exId, optIdx) {
+  launchWorkout(exId, optIdx);
 };
 
-// 7. Lottery Randomizer Logic (Snappy & Accessible)
+window.launchWorkout = function(exId, optIdx = 0) {
+  const ex = EXERCISES.find(e => e.id === exId);
+  if (!ex) return;
+  const opt = ex.options[optIdx] || ex.options[0];
+  openWorkoutArena(ex, opt);
+};
+
+// 9. Lottery Roll Engine
 function drawRandomExercise() {
   if (state.isRolling) return;
   state.isRolling = true;
-  voice.initAudio();
+  audio.init();
 
   let count = 0;
   const maxTicks = 12;
-  const intervalTime = 80;
+  const intervalTime = 75;
 
-  DOM.drawBtn.disabled = true;
-  DOM.quickDrawBtn.disabled = true;
+  DOM.mainDrawBtn.disabled = true;
+  DOM.mainDrawBtn.style.opacity = '0.7';
 
   const rollInterval = setInterval(() => {
     count++;
-    voice.tick();
-
-    const randEx = EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
-    const randOpt = randEx.options[Math.floor(Math.random() * randEx.options.length)];
-
-    DOM.lotteryDisplay.innerHTML = `
-      <div class="drawn-result-card" style="opacity: 0.85;">
-        <span class="drawn-category">${randEx.category}</span>
-        <h3 class="drawn-name">${randEx.icon} ${randEx.name}</h3>
-        <div class="drawn-spec">${randOpt.text}</div>
-      </div>
-    `;
+    audio.tick();
 
     if (count >= maxTicks) {
       clearInterval(rollInterval);
       state.isRolling = false;
-      DOM.drawBtn.disabled = false;
-      DOM.quickDrawBtn.disabled = false;
+      DOM.mainDrawBtn.disabled = false;
+      DOM.mainDrawBtn.style.opacity = '1';
 
+      // Select final random exercise & option
       const finalEx = EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
       const finalOpt = finalEx.options[Math.floor(Math.random() * finalEx.options.length)];
 
       state.currentDrawn = { exercise: finalEx, option: finalOpt };
-      voice.beepHigh();
+      audio.beepHigh();
 
-      renderDrawnResult(finalEx, finalOpt);
-      setupTrainer(finalEx, finalOpt);
-
-      // Voice prompt announcement
-      voice.speak(`הוגרל: ${finalEx.name}, ${finalOpt.text}`);
+      // Immediately open into full screen!
+      openWorkoutArena(finalEx, finalOpt);
     }
   }, intervalTime);
 }
 
-function renderDrawnResult(ex, opt) {
-  DOM.lotteryDisplay.innerHTML = `
-    <div class="drawn-result-card">
-      <span class="drawn-category">${ex.category}</span>
-      <div class="drawn-img-wrap">
-        <img src="${ex.image}" alt="${ex.name}" onerror="this.src='https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&q=80'">
-      </div>
-      <h3 class="drawn-name">${ex.icon} ${ex.name}</h3>
-      <div class="drawn-spec">🎯 המשימה: ${opt.text}</div>
-      <p class="drawn-tip">💡 ${ex.bagrutTips[0]}</p>
-    </div>
-  `;
-}
-
-// 8. Trainer Setup (Timed or Reps)
-function setupTrainer(ex, opt) {
-  state.activeExercise = ex;
-  state.activeOption = opt;
-
-  DOM.trainerContainer.classList.remove('hidden');
-  DOM.quickTrainerBtn.classList.remove('hidden');
-  DOM.trainerTitle.textContent = `${ex.icon} ${ex.name}`;
-  DOM.trainerDesc.textContent = `אתגר נבחר: ${opt.text}`;
-
-  // Request WakeLock to keep screen on while training on mat
-  voice.requestWakeLock();
-
-  if (ex.type === 'timed-interval') {
-    DOM.trainerTypeBadge.textContent = '⏱️ אינטרוולים מתוזמנים';
-    DOM.timedInterface.classList.remove('hidden');
-    DOM.repsInterface.classList.add('hidden');
-    initPlankTimer(opt.sets, opt.workSec, opt.restSec);
-  } else {
-    DOM.trainerTypeBadge.textContent = '🔢 ספירת חזרות';
-    DOM.timedInterface.classList.add('hidden');
-    DOM.repsInterface.classList.remove('hidden');
-    initRepsCounter(opt.reps, opt.unit || 'חזרות');
-  }
-
-  DOM.trainerContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-// 9. Timed Interval Engine (Plank) with Voice Cues
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 95; // 596.9
+// 10. Timed Interval Engine (Plank)
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 102; // 640.88
 
 function initPlankTimer(sets, workSec, restSec) {
   clearInterval(state.timer.intervalId);
@@ -476,22 +470,22 @@ function initPlankTimer(sets, workSec, restSec) {
 function updateTimerDisplay() {
   const { phase, currentSet, totalSets, timeLeft, totalPhaseDuration } = state.timer;
   
-  DOM.timerDigits.textContent = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-  DOM.timerRoundIndicator.textContent = `סט ${currentSet} מתוך ${totalSets}`;
+  DOM.wkTimerDigits.textContent = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+  DOM.wkRoundCount.textContent = `סט ${currentSet} מתוך ${totalSets}`;
 
   if (phase === 'work') {
-    DOM.timerPhaseTag.textContent = '🔥 פלאנק - עבודה!';
-    DOM.timerPhaseTag.classList.remove('rest');
-    DOM.timerProgressRing.classList.remove('rest');
+    DOM.wkPhaseBadge.textContent = '🔥 פלאנק - עבודה!';
+    DOM.wkPhaseBadge.classList.remove('rest');
+    DOM.timerRing.classList.remove('rest');
   } else {
-    DOM.timerPhaseTag.textContent = '🧘 מנוחה והתרגעות';
-    DOM.timerPhaseTag.classList.add('rest');
-    DOM.timerProgressRing.classList.add('rest');
+    DOM.wkPhaseBadge.textContent = '🧘 מנוחה והסדרת נשימה';
+    DOM.wkPhaseBadge.classList.add('rest');
+    DOM.timerRing.classList.add('rest');
   }
 
   const fraction = timeLeft / totalPhaseDuration;
   const offset = CIRCLE_CIRCUMFERENCE * (1 - fraction);
-  DOM.timerProgressRing.style.strokeDashoffset = offset;
+  DOM.timerRing.style.strokeDashoffset = offset;
 }
 
 function toggleTimer() {
@@ -503,18 +497,17 @@ function toggleTimer() {
 }
 
 function startTimer() {
-  voice.initAudio();
+  audio.init();
   state.timer.isRunning = true;
   setTimerButtonState(true);
-  voice.speak('התחל עבודה');
+  audio.speak('עבודה!');
 
   state.timer.intervalId = setInterval(() => {
     state.timer.timeLeft--;
 
-    // Countdown sounds in last 3 seconds
     if (state.timer.timeLeft > 0 && state.timer.timeLeft <= 3) {
-      voice.beepLow();
-      voice.speak(`${state.timer.timeLeft}`);
+      audio.beepLow();
+      audio.speak(`${state.timer.timeLeft}`);
     }
 
     if (state.timer.timeLeft <= 0) {
@@ -532,17 +525,17 @@ function handlePhaseTransition() {
       completePlankWorkout();
       return;
     }
-    voice.beepHigh();
-    voice.speak('מנוחה');
+    audio.beepHigh();
+    audio.speak('מנוחה');
     t.phase = 'rest';
     t.timeLeft = t.restSec;
     t.totalPhaseDuration = t.restSec;
     updateTimerDisplay();
   } else {
-    voice.beepHigh();
+    audio.beepHigh();
     t.phase = 'work';
     t.currentSet++;
-    voice.speak(`סט ${t.currentSet}, עבודה`);
+    audio.speak(`סט ${t.currentSet}, עבודה!`);
     t.timeLeft = t.workSec;
     t.totalPhaseDuration = t.workSec;
     updateTimerDisplay();
@@ -553,7 +546,6 @@ function pauseTimer() {
   clearInterval(state.timer.intervalId);
   state.timer.isRunning = false;
   setTimerButtonState(false);
-  voice.speak('הושהה');
 }
 
 function resetTimer() {
@@ -565,47 +557,46 @@ function resetTimer() {
 
 function setTimerButtonState(running) {
   if (running) {
-    DOM.timerBtnIcon.textContent = '⏸';
-    DOM.timerBtnText.textContent = 'השהה';
-    DOM.timerStartPauseBtn.className = 'btn btn-secondary btn-lg';
+    DOM.timerActionIcon.textContent = '⏸';
+    DOM.timerActionText.textContent = 'השהה';
+    DOM.timerToggleBtn.className = 'btn btn-secondary btn-large';
   } else {
-    DOM.timerBtnIcon.textContent = '▶';
-    DOM.timerBtnText.textContent = 'התחל אימון';
-    DOM.timerStartPauseBtn.className = 'btn btn-success btn-lg';
+    DOM.timerActionIcon.textContent = '▶';
+    DOM.timerActionText.textContent = 'התחל אימון';
+    DOM.timerToggleBtn.className = 'btn btn-primary btn-large';
   }
 }
 
 function completePlankWorkout() {
   pauseTimer();
-  voice.celebrate();
-  voice.speak('כל הכבוד! סיימת את הפלאנק!');
+  audio.celebrate();
+  audio.speak('כל הכבוד! סיימת את הפלאנק!');
   triggerCelebration('אלופים! השלמתם את כל סטי הפלאנק בדיוק לפי ההנחיות לבגרות!');
 }
 
-// 10. Reps Counter Engine
+// 11. Reps Counter Engine
 function initRepsCounter(targetReps, unitName) {
   state.reps.current = 0;
   state.reps.target = targetReps;
 
-  DOM.repsCurrentNum.textContent = '0';
-  DOM.repsTargetLabel.textContent = `מתוך ${targetReps} ${unitName}`;
-  DOM.repsBarFill.style.width = '0%';
+  DOM.wkRepsCurrent.textContent = '0';
+  DOM.wkRepsTarget.textContent = `מתוך ${targetReps} ${unitName}`;
+  DOM.wkRepsBar.style.width = '0%';
 }
 
 function incrementRep() {
-  voice.initAudio();
+  audio.init();
   if (state.reps.current < state.reps.target) {
     state.reps.current++;
-    voice.tick();
+    audio.tick();
     updateRepsDisplay();
 
-    // Voice announce every few reps or near end
     if (state.reps.current === state.reps.target) {
-      voice.celebrate();
-      voice.speak('היעד הושלם! כל הכבוד!');
+      audio.celebrate();
+      audio.speak('היעד הושלם! כל הכבוד!');
       triggerCelebration(`כל הכבוד! הגעתם ליעד של ${state.reps.target} חזרות מלאות!`);
     } else if (state.reps.current % 5 === 0) {
-      voice.speak(`${state.reps.current}`);
+      audio.speak(`${state.reps.current}`);
     }
   }
 }
@@ -618,28 +609,20 @@ function decrementRep() {
 }
 
 function updateRepsDisplay() {
-  DOM.repsCurrentNum.textContent = state.reps.current;
+  DOM.wkRepsCurrent.textContent = state.reps.current;
   const pct = Math.min(100, Math.round((state.reps.current / state.reps.target) * 100));
-  DOM.repsBarFill.style.width = `${pct}%`;
+  DOM.wkRepsBar.style.width = `${pct}%`;
 }
 
 function completeRepsDirectly() {
   state.reps.current = state.reps.target;
   updateRepsDisplay();
-  voice.celebrate();
-  voice.speak('תרגיל הושלם בהצלחה!');
+  audio.celebrate();
+  audio.speak('כל הכבוד! תרגיל הושלם!');
   triggerCelebration(`מדהים! השלמתם את תרגיל ה-${state.activeExercise.name} בהצלחה!`);
 }
 
-// 11. Modal Dialogs & Helpers
-window.startExerciseDirectly = function(exId) {
-  const ex = EXERCISES.find(e => e.id === exId);
-  if (!ex) return;
-  const opt = ex.options[0];
-  renderDrawnResult(ex, opt);
-  setupTrainer(ex, opt);
-};
-
+// 12. Exercise Technique Guide Dialog
 window.openExerciseGuide = function(exId) {
   const ex = EXERCISES.find(e => e.id === exId);
   if (!ex) return;
@@ -665,11 +648,11 @@ window.openExerciseGuide = function(exId) {
       <ul>${mistakesList}</ul>
     </div>
 
-    <div class="action-btn-group grid-2" style="margin-top: 1rem;">
-      <button class="btn btn-primary btn-md" onclick="startExerciseFromDialog('${ex.id}')">
-        ⚡ התחל אימון זה עכשיו
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 1rem;">
+      <button class="btn btn-primary" onclick="startExerciseFromDialog('${ex.id}')">
+        ⚡ התחל אימון זה
       </button>
-      <button class="btn btn-outline btn-md" onclick="DOM.exerciseDialog.close()">
+      <button class="btn btn-outline" onclick="DOM.exerciseDialog.close()">
         סגור
       </button>
     </div>
@@ -680,10 +663,10 @@ window.openExerciseGuide = function(exId) {
 
 window.startExerciseFromDialog = function(exId) {
   DOM.exerciseDialog.close();
-  window.startExerciseDirectly(exId);
+  launchWorkout(exId, 0);
 };
 
-// 12. Celebration and Confetti
+// 13. Celebration and Confetti
 function triggerCelebration(msg) {
   DOM.celebrateMsg.textContent = msg;
   DOM.celebrateDialog.showModal();
@@ -698,7 +681,7 @@ function runConfetti() {
   canvas.height = window.innerHeight;
 
   const confettiPieces = [];
-  const colors = ['#10b981', '#f97316', '#0284c7', '#8b5cf6', '#eab308', '#ec4899'];
+  const colors = ['#10b981', '#f97316', '#0284c7', '#8b5cf6', '#eab308'];
 
   for (let i = 0; i < 90; i++) {
     confettiPieces.push({
@@ -750,7 +733,7 @@ function runConfetti() {
   animate();
 }
 
-// 13. Fallback support for <dialog closedby="any"> according to Modern Web Guidance
+// 14. Fallback support for <dialog closedby="any"> according to Modern Web Guidance
 if (!('closedBy' in HTMLDialogElement.prototype)) {
   const outside = (e, dialog) => {
     const r = dialog.getBoundingClientRect();
@@ -763,79 +746,52 @@ if (!('closedBy' in HTMLDialogElement.prototype)) {
   }
 }
 
-// 14. Event Listeners Setup
+// 15. Sound toggling sync
+function toggleSound() {
+  audio.soundEnabled = !audio.soundEnabled;
+  const icon = audio.soundEnabled ? '🔊' : '🔇';
+  DOM.soundIcon.textContent = icon;
+  DOM.wkSoundIcon.textContent = icon;
+}
+
+// 16. Event Listeners Setup
 function initEventListeners() {
-  DOM.drawBtn.addEventListener('click', drawRandomExercise);
-  DOM.quickDrawBtn.addEventListener('click', () => {
-    drawRandomExercise();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Tab switching
+  DOM.tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  DOM.quickTrainerBtn.addEventListener('click', () => {
-    DOM.trainerContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  });
+  // Main lottery draw button
+  DOM.mainDrawBtn.addEventListener('click', drawRandomExercise);
 
-  // Sound toggle
-  DOM.soundToggleBtn.addEventListener('click', () => {
-    voice.soundEnabled = !voice.soundEnabled;
-    DOM.soundToggleBtn.classList.toggle('active', voice.soundEnabled);
-    DOM.soundIcon.textContent = voice.soundEnabled ? '🔊' : '🔇';
-  });
-
-  // Voice toggle
-  DOM.voiceToggleBtn.addEventListener('click', () => {
-    voice.speechEnabled = !voice.speechEnabled;
-    DOM.voiceToggleBtn.classList.toggle('active', voice.speechEnabled);
-    DOM.voiceIcon.textContent = voice.speechEnabled ? '🗣️' : '🤫';
-  });
-
-  // WakeLock toggle
-  DOM.wakelockToggleBtn.addEventListener('click', () => {
-    voice.wakeLockEnabled = !voice.wakeLockEnabled;
-    DOM.wakelockToggleBtn.classList.toggle('active', voice.wakeLockEnabled);
-    if (voice.wakeLockEnabled) {
-      voice.requestWakeLock();
-    } else {
-      voice.releaseWakeLock();
-    }
-  });
-
-  DOM.closeTrainerBtn.addEventListener('click', () => {
-    clearInterval(state.timer.intervalId);
-    DOM.trainerContainer.classList.add('hidden');
-    DOM.quickTrainerBtn.classList.add('hidden');
-    voice.releaseWakeLock();
-  });
-
-  // Category Filters
-  DOM.catalogFilters.addEventListener('click', (e) => {
-    const chip = e.target.closest('.filter-chip');
-    if (!chip) return;
-    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    renderCatalog(chip.dataset.filter);
-  });
+  // Fullscreen workout arena controls
+  DOM.exitWorkoutBtn.addEventListener('click', closeWorkoutArena);
+  DOM.soundToggleBtn.addEventListener('click', toggleSound);
+  DOM.wkSoundBtn.addEventListener('click', toggleSound);
 
   // Timer controls
-  DOM.timerStartPauseBtn.addEventListener('click', toggleTimer);
+  DOM.timerToggleBtn.addEventListener('click', toggleTimer);
   DOM.timerResetBtn.addEventListener('click', resetTimer);
 
   // Reps controls
-  DOM.repPlusBtn.addEventListener('click', incrementRep);
-  DOM.repMinusBtn.addEventListener('click', decrementRep);
-  DOM.repCompleteBtn.addEventListener('click', completeRepsDirectly);
+  DOM.repIncBtn.addEventListener('click', incrementRep);
+  DOM.repDecBtn.addEventListener('click', decrementRep);
+  DOM.repFinishBtn.addEventListener('click', completeRepsDirectly);
 
   // Dialog controls
   DOM.dialogCloseBtn.addEventListener('click', () => DOM.exerciseDialog.close());
-  DOM.celebrateCloseBtn.addEventListener('click', () => DOM.celebrateDialog.close());
-  DOM.celebrateDrawNextBtn.addEventListener('click', () => {
+  DOM.celebrateCloseBtn.addEventListener('click', () => {
+    DOM.celebrateDialog.close();
+    closeWorkoutArena();
+  });
+  DOM.celebrateNextBtn.addEventListener('click', () => {
     DOM.celebrateDialog.close();
     drawRandomExercise();
   });
 }
 
-// 15. Initial Load
+// 17. Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  renderCatalog('all');
+  renderCatalog();
   initEventListeners();
 });
